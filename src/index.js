@@ -1,8 +1,8 @@
 // dotenv loaded via --import dotenv/config flag in package.json dev script
 import express from "express";
 import connectDB from "./db/index.js"; // our connection helper
+import { app } from "./app.js"; // our express app
 
-const app = express();
 
 // wrap startup in async function so we can await DB connection
 const startServer = async () => {
