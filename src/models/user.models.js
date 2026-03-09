@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     },
     profilePicture: {
       type: String,
+      required: true,
     },
     refreshToken: {
       type: String
@@ -42,7 +43,7 @@ userSchema.pre("save", async function (next) {
     return next();
   }
   this.password = await bcrypt.hash(this.password, 10);
-  next();
+
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {

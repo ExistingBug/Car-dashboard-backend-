@@ -2,7 +2,7 @@ import {v2 as cloudinary} from "cloudinary";
 import fs from "fs"; //manage file system
 
 cloudinary.config({
-    cloud_name: process.env.CLOUDNARY_CLOUD_NAME,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
@@ -17,11 +17,13 @@ const uploadOnCloudinary = async (filePath) => {
         //file has been successfully uploaded to cloudinary, we can remove it from our server
         console.log("File uploaded to Cloudinary:", response.secure_url);
         return response;
+        fs.unlinkSync(filePath); //remove file from server after upload
     } catch (error) {
-        fs.unlink(filePath) ;
-        //remove the locally saved temporary file as the operation got failed 
-        return null;
-    }
-};
+       
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath); 
+        }
+    
+}};
 
 export { uploadOnCloudinary };
