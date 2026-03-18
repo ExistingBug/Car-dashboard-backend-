@@ -57,9 +57,93 @@ const registerUser = asyncHandler(async (req, res) => {
             "User registered successfully", 
             createdUser
         ));
-
-
 }); 
 
 
-export { registerUser };
+// ✅ LOGIN USER
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        throw new ApiError("Email and password are required", 400);
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError("User not found", 404);
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password);
+
+    if (!isPasswordValid) {
+        throw new ApiError("Invalid credentials", 401);
+    }
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    const loggedInUser = await User.findById(user._id).select(
+        "-password -refreshToken -__v"
+    );
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(
+                200,
+                "User logged in successfully",
+                {
+                    user: loggedInUser,
+                    accessToken,
+                    refreshToken
+                }
+            )
+        );
+});
+
+
+// ✅ LOGOUT USER
+const logoutUser = asyncHandler(async (req, res) => {
+
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $unset: {
+                refreshToken: 1
+            }
+        },
+        {
+            new: true
+        }
+    );
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    };
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(
+            new ApiResponse(
+                200,
+                "User logged out successfully"
+            )
+        );
+});
+
+
+export { registerUser, loginUser, logoutUser };
