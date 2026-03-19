@@ -49,7 +49,17 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!createdUser) {
         throw new ApiError("Failed to create user", 500);
     }
-
+    
+    return res.status(200).cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options).json(
+        new ApiResponse(
+            200,{
+                user: loggedInUser, accessToken , refreshToken
+            },
+            "User registered successfully"
+        )
+    );
+    
     //returnign success response with created user data except password and refresh token.
     return res.status(201).json(
         new ApiResponse(
@@ -59,8 +69,24 @@ const registerUser = asyncHandler(async (req, res) => {
         ));
 }); 
 
+const generateAcceessAndRefreshTokens = async(userId)=>{
+    try {
+        const user= await User.findById(userId);
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
+        
 
-// ✅ LOGIN USER
+        user.refreshToken = refreshToken;
+        await user.save({ validateBeforeSave: false });
+
+        return { accessToken, refreshToken };
+        
+    } catch (error) {
+        throw new ApiError("Failed to generate tokens", 500);
+    }
+};
+
+//  LOGIN USER
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
@@ -80,11 +106,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError("Invalid credentials", 401);
     }
 
-    const accessToken = user.generateAccessToken();
-    const refreshToken = user.generateRefreshToken();
-
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
+    const { accessToken, refreshToken } = await generateAcceessAndRefreshTokens(user._id);
 
     const loggedInUser = await User.findById(user._id).select(
         "-password -refreshToken -__v"
@@ -113,7 +135,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 
-// ✅ LOGOUT USER
+//  LOGOUT USER
 const logoutUser = asyncHandler(async (req, res) => {
 
     await User.findByIdAndUpdate(
@@ -147,3 +169,17 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 
 export { registerUser, loginUser, logoutUser };
+
+/* important things to remember:
+jaha pe bhi db se  baat ho waha await lagana hai taki promise resolve hone ke baad hi aage ka code execute ho.
+1. Always validate user input and handle errors using try-catch blocks and custom error classes like ApiError.
+2. Use asyncHandler to wrap asynchronous route handlers and avoid unhandled promise rejections.
+3. When handling file uploads, ensure that you validate the presence of the file and handle any errors that may occur during the upload process.
+4. When generating access and refresh tokens, ensure that you securely store the refresh token in the database and set appropriate cookie options for security.
+5. Always return consistent API responses using a standardized format like ApiResponse to improve client-side handling of responses.
+6. When logging out a user, ensure that you clear the relevant cookies and remove the refresh token from the database to prevent unauthorized access.
+7. Always exclude sensitive information like passwords and refresh tokens from API responses to enhance security.
+8. difference between user and User is that user is an instance of the User model, while User is the model itself.
+ The User model provides methods for creating, querying, and manipulating user documents in the database, 
+ while a user instance represents a specific user document with its own properties and methods.
+*/

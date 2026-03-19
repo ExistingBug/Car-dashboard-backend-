@@ -22,7 +22,7 @@ export const verifyJWT = asyncHandler(async(req, _, next) => {
         }
     
         req.user = user;
-        next()
+        next()// use next to pass control to the next middleware or route handler.
     } catch (error) {
         throw new ApiError(401, error?.message || "Invalid access token")
     }
