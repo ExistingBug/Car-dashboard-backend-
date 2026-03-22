@@ -68,13 +68,19 @@ const getUserCars = asyncHandler(async (req, res) => {
 }
 });
 
+
 const deleteCar = asyncHandler(async (req, res) => {
     const { carId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(carId))
-        {
-            throw new ApiError(400, "Invalid car ID");
-        }
+    if (!mongoose.Types.ObjectId.isValid(carId)) {
+        throw new ApiError(400, "Invalid car ID");
+    }
+
+    const car = await Car.findById(carId); // ✅ missing step
+
+    if (!car) {
+        throw new ApiError(404, "Car not found");
+    }
 
     if (car.user.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "Unauthorized action");
@@ -86,6 +92,9 @@ const deleteCar = asyncHandler(async (req, res) => {
         new ApiResponse(200, "Car deleted successfully")
     );
 });
+
+
+
 
 export {
     addCar,

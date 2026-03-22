@@ -131,16 +131,10 @@ const loginUser = asyncHandler(async (req, res) => {
 //  LOGOUT USER
 const logoutUser = asyncHandler(async (req, res) => {
 
-    await User.findByIdAndUpdate(
-        req.user._id,
-        {
-            $unset: {
-                refreshToken: 1
-            }
-        },
-        {
-            new: true
-        }
+   await User.findByIdAndUpdate(
+    req.user._id,
+    { $unset: { refreshToken: 1 } },
+    { returnDocument: "after" }
     );
 
     const options = {

@@ -17,7 +17,7 @@ const documentSchema = new mongoose.Schema(
       enum: ["RC", "Insurance", "PUC", "Driving License", "Other"],
       required: true,
     },
-    fileUrl: {
+    fileImage: {
       type: String,
       required: true,
     },
