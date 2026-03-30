@@ -9,12 +9,6 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-// 🔹 Upload a document
-router.route("/upload").post(
-  verifyJWT,
-  upload.single("document"), // field name in form-data
-  uploadDocument
-);
 
 router.route("/upload").post(
     upload.fields([
@@ -27,7 +21,7 @@ router.route("/upload").post(
 );
 
 // 🔹 Get all documents of logged-in user
-router.route("/").get(
+router.route("/getdocs").get(
   verifyJWT,
   getDocuments
 );

@@ -1,7 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import Document from "../models/document.model.js";
+import Document from "../models/document.models.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const uploadDocument = asyncHandler(async (req, res) => {
     const { car, documentType, issueDate, expiryDate, notes } = req.body;
@@ -10,17 +11,26 @@ const uploadDocument = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Required fields missing");
     }
 
-    const fileUrl = req.file?.path;
+    const fileLocalPath = req.files?.fileImage?.[0]?.path;
 
-    if (!fileUrl) {
+    if (!fileLocalPath) {
         throw new ApiError(400, "Document file required");
     }
+
+    // ✅ Upload to Cloudinary
+    const fileUrl = await uploadOnCloudinary(fileLocalPath);
+
+    if (!fileUrl) {
+        throw new ApiError(500, "Failed to upload document");
+    }
+
+    const fileImage = fileUrl.url;
 
     const document = await Document.create({
         user: req.user._id,
         car,
         documentType,
-        fileUrl,
+        fileImage,
         issueDate,
         expiryDate,
         notes

@@ -76,7 +76,7 @@ const deleteCar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid car ID");
     }
 
-    const car = await Car.findById(carId); // ✅ missing step
+    const car = await Car.findById(carId); // ✅missing step
 
     if (!car) {
         throw new ApiError(404, "Car not found");

@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import Reminder from "../models/reminder.model.js";
+import Reminder from "../models/reminder.models.js";
 
 const createReminder = asyncHandler(async (req, res) => {
     const {
@@ -36,6 +36,12 @@ const createReminder = asyncHandler(async (req, res) => {
 
 const getReminders = asyncHandler(async (req, res) => {
     const reminders = await Reminder.find({ user: req.user._id }).populate("car");
+
+    if (!reminders.length) {
+        return res.status(200).json(
+            new ApiResponse(200, "No reminders found", [])
+        );
+    };
 
     return res.status(200).json(
         new ApiResponse(200, "Reminders fetched", reminders)
